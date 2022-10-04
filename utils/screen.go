@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -33,7 +34,7 @@ func (sc ScreenConfig) FilterValue() string {
 }
 
 func (sc ScreenConfig) Running() bool {
-	files, err := ioutil.ReadDir("/run/screens/S-" + sc.User)
+	files, err := ioutil.ReadDir("/run/screen/S-" + sc.User)
 	if err != nil {
 		panic(err)
 	}
@@ -49,9 +50,9 @@ func (sc ScreenConfig) Run() tea.Msg {
 	if sc.Running() {
 		return nil
 	}
-	command := []string{"screen", "-Smd", fmt.Sprintf("%s", sc.Id), "bash", "-c", strings.Join(sc.Commands, ";")}
+	command := []string{"screen", "-Smd", sc.Id, "bash", "-c", strings.Join(sc.Commands, ";")}
 	cmd := exec.Command(command[0], command[1:]...)
-	err := cmd.Start()
+	err := cmd.Run()
 	if err != nil {
 		panic(err)
 	}
@@ -64,16 +65,24 @@ func (sc ScreenConfig) Stop() tea.Msg {
 	}
 	command := []string{"screen", "-XS", sc.Id, "quit"}
 	cmd := exec.Command(command[0], command[1:]...)
-	err := cmd.Start()
+	err := cmd.Run()
 	if err != nil {
 		panic(err)
 	}
 	return nil
 }
 
+func (sc ScreenConfig) Attach() (*exec.Cmd, bool) {
+	if !sc.Running() {
+		return nil, false
+	}
+	command := []string{"screen", "-r", sc.Id}
+	cmd := exec.Command(command[0], command[1:]...)
+	return cmd, true
+}
+
 func GetConfig(name string) ScreenConfig {
-	defer Track(Runningtime("GetConfig"))
-	path := fmt.Sprintf("./config/%s.yml", name)
+	path := fmt.Sprintf("./config/%s", name)
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -85,4 +94,24 @@ func GetConfig(name string) ScreenConfig {
 	}
 	config.Path = path
 	return config
+}
+
+func GetAllConfigs() []ScreenConfig {
+	configDir, err := os.Open("./config")
+	if err != nil {
+		panic(err)
+	}
+	files, err := configDir.Readdir(0)
+	if err != nil {
+		panic(err)
+	}
+
+	var screenConfs []ScreenConfig
+	for _, file := range files {
+		if strings.Contains(file.Name(), ".yml") {
+			screenConfs = append(screenConfs, GetConfig(file.Name()))
+		}
+	}
+
+	return screenConfs
 }

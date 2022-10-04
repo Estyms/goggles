@@ -1,0 +1,7 @@
+name: "Hello World"
+id: "hello-world"
+description: "Hello Everyone"
+user: "estym"
+commands:
+  - "echo $USER >> test"
+  - "watch echo"
