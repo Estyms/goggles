@@ -21,9 +21,9 @@ That's why I made this manager.
 
 ## Usage
 
-To use that app, you need to create a YAML file for every screen you want to run.
+To use that app, you need to create a TOML file for every screen you want to run.
 
-The yaml files follow this template : 
+The toml files follow this template : 
 ```toml
 name = "string"  # Name of the container
 id = "string"    # Name of the screen session
