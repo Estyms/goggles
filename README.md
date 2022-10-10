@@ -24,15 +24,12 @@ That's why I made this manager.
 To use that app, you need to create a YAML file for every screen you want to run.
 
 The yaml files follow this template : 
-```yaml
-name: string  # Name of the container
-id: string    # Name of the screen session
-description: string   # Description of the container
-user: string  # User that can run that script
-commands:     # Commands that the screen will play in order
-  - string
-  - string
-  - ...
+```toml
+name = "string"  # Name of the container
+id = "string"    # Name of the screen session
+description = "string"   # Description of the container
+user = "string"  # User that can run that script
+commands = ["string"]     # Commands that the screen will play in order
 ```
 
 You can see an example file in ``config/``.
