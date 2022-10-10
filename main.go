@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
+	"screen-manager/utils"
+
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"os"
-	"screen-manager/utils"
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -26,6 +29,7 @@ type listKeyMap struct {
 	toggleHelpMenu  key.Binding
 	attachScreen    key.Binding
 	startScreen     key.Binding
+	editScreen      key.Binding
 	stopScreen      key.Binding
 	quit            key.Binding
 }
@@ -43,6 +47,10 @@ func newListKeyMap() *listKeyMap {
 		startScreen: key.NewBinding(
 			key.WithKeys("R", "r"),
 			key.WithHelp("R", "start screen"),
+		),
+		editScreen: key.NewBinding(
+			key.WithKeys("e", "E"),
+			key.WithHelp("E", "edit screen"),
 		),
 		stopScreen: key.NewBinding(
 			key.WithKeys("D", "d"),
@@ -65,11 +73,10 @@ type model struct {
 	keys     *listKeyMap
 }
 
-func newModel() model {
+func makeList() list.Model {
 	var (
 		listKeys = newListKeyMap()
 	)
-
 	// Make initial list of items
 	screenConfs := utils.GetAllConfigs()
 	items := make([]list.Item, len(screenConfs))
@@ -89,7 +96,20 @@ func newModel() model {
 			listKeys.toggleHelpMenu,
 		}
 	}
+	return screenList
+}
 
+func (m model) refreshList() tea.Cmd {
+	screenConfs := utils.GetAllConfigs()
+	for i, conf := range screenConfs {
+		m.list.SetItem(i, conf)
+	}
+	return nil
+}
+
+func newModel() model {
+	listKeys := newListKeyMap()
+	screenList := makeList()
 	return model{
 		list: screenList,
 		keys: listKeys,
@@ -110,6 +130,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list.SetSize(msg.Width-h, msg.Height-v)
 	case dettachScreen:
 		tea.ExitAltScreen()
+		cmds := m.refreshList()
+		return m, cmds
 	case tea.KeyMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
@@ -127,6 +149,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SelectedItem().(utils.ScreenConfig).Stop()
 			return m, nil
 
+		case key.Matches(msg, m.keys.editScreen):
+			if m.list.SelectedItem().(utils.ScreenConfig).Running() {
+				return m, nil
+			}
+
+			tea.EnterAltScreen()
+			cmdString := []string{"vim", m.list.SelectedItem().(utils.ScreenConfig).Path}
+			cmd := exec.Command(cmdString[0], cmdString[1:]...)
+			command := tea.ExecProcess(cmd, func(err error) tea.Msg {
+				return dettachScreen{}
+			})
+
+			return m, command
+
 		case key.Matches(msg, m.keys.attachScreen):
 			tea.EnterAltScreen()
 			cmd, valid := m.list.SelectedItem().(utils.ScreenConfig).Attach()
@@ -136,7 +172,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				})
 				return m, command
 			}
-			return m, nil
+			return m, m.refreshList()
 
 		case key.Matches(msg, m.keys.toggleStatusBar):
 			m.list.SetShowStatusBar(!m.list.ShowStatusBar())
@@ -163,6 +199,7 @@ func (m model) View() string {
 }
 
 func main() {
+	godotenv.Load()
 	if err := tea.NewProgram(newModel()).Start(); err != nil {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)

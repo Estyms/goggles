@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"gopkg.in/yaml.v3"
 )
 
@@ -20,9 +21,21 @@ type ScreenConfig struct {
 	Commands []string
 }
 
+var runningDot = lipgloss.NewStyle().SetString("▶").
+	Foreground(lipgloss.Color("41")).
+	PaddingRight(1).
+	String()
+var stoppedDot = lipgloss.NewStyle().SetString("⏹").
+	Foreground(lipgloss.Color("9")).
+	PaddingRight(1).
+	String()
+
 func (sc ScreenConfig) Title() string {
-	status := map[bool]string{true: "Running", false: "Stopped"}[sc.Running()]
-	return fmt.Sprintf("%s : %s", sc.Name, status)
+	isRunning := sc.Running()
+
+	status := map[bool]string{true: "Running", false: "Stopped"}[isRunning]
+	statusDot := map[bool]string{true: runningDot, false: stoppedDot}[isRunning]
+	return fmt.Sprintf("%s %s : %s", statusDot, sc.Name, status)
 }
 
 func (sc ScreenConfig) Description() string {
@@ -30,11 +43,12 @@ func (sc ScreenConfig) Description() string {
 }
 
 func (sc ScreenConfig) FilterValue() string {
-	return sc.Description() + sc.Title()
+	return sc.Name + sc.Desc
 }
 
 func (sc ScreenConfig) Running() bool {
-	files, err := ioutil.ReadDir("/run/screen/S-" + sc.User)
+	path := os.Getenv("GOSCREENDIR") + "/S-" + sc.User
+	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		panic(err)
 	}
@@ -81,6 +95,11 @@ func (sc ScreenConfig) Attach() (*exec.Cmd, bool) {
 	return cmd, true
 }
 
+func initScreen() {
+	cmd := exec.Command("screen", "-dm", "bash", "echo")
+	_ = cmd.Run()
+}
+
 func GetConfig(name string) ScreenConfig {
 	path := fmt.Sprintf("./config/%s", name)
 	data, err := ioutil.ReadFile(path)
@@ -97,6 +116,7 @@ func GetConfig(name string) ScreenConfig {
 }
 
 func GetAllConfigs() []ScreenConfig {
+	initScreen()
 	configDir, err := os.Open("./config")
 	if err != nil {
 		panic(err)
