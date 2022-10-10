@@ -1,4 +1,4 @@
-module screen-manager
+module goggles
 
 go 1.19
 

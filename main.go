@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"goggles/utils"
 	"os"
 	"os/exec"
-	"screen-manager/utils"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"

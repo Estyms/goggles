@@ -1,4 +1,4 @@
-# Screen Manager
+# Goggles
 
 So this project was made because I use a VPS that cannot launch docker containers.
 Meaning that it was pretty annoying to launch multiple apps in the background, playing with **screen** has become my 
