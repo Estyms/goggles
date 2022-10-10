@@ -13,6 +13,7 @@ That's why I made this manager.
 
 - Starting a screen
 - Attach to a screen to monitor it
+- Edit a screen config in app (While not running)
 - Stop a screen
 
 ### Upcoming
