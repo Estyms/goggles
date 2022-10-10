@@ -9,15 +9,15 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"gopkg.in/yaml.v3"
+	toml "github.com/pelletier/go-toml/v2"
 )
 
 type ScreenConfig struct {
 	Name     string
 	Id       string
-	Desc     string `yaml:"description"`
+	Desc     string `toml:"description"`
 	User     string
-	Path     string
+	Path     string `toml:"-"`
 	Commands []string
 }
 
@@ -100,6 +100,17 @@ func initScreen() {
 	_ = cmd.Run()
 }
 
+func CreateNewConfig(config ScreenConfig) {
+	data, err := toml.Marshal(&config)
+	if err != nil {
+		panic(err)
+	}
+	err = os.WriteFile(config.Path, data, 0666)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func GetConfig(name string) ScreenConfig {
 	path := fmt.Sprintf("./config/%s", name)
 	data, err := ioutil.ReadFile(path)
@@ -107,7 +118,7 @@ func GetConfig(name string) ScreenConfig {
 		panic(err)
 	}
 	config := ScreenConfig{}
-	err = yaml.Unmarshal(data, &config)
+	err = toml.Unmarshal(data, &config)
 	if err != nil {
 		panic(err)
 	}
@@ -128,7 +139,7 @@ func GetAllConfigs() []ScreenConfig {
 
 	var screenConfs []ScreenConfig
 	for _, file := range files {
-		if strings.Contains(file.Name(), ".yml") {
+		if strings.Contains(file.Name(), ".toml") {
 			screenConfs = append(screenConfs, GetConfig(file.Name()))
 		}
 	}

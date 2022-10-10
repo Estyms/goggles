@@ -1,7 +1,0 @@
-name: "Hello World"
-id: "hello-world"
-description: "Hello Everyone"
-user: "evann"
-commands:
-  - "echo $USER >> test"
-  - "watch echo"

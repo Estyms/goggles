@@ -1,0 +1,5 @@
+name = "Drunk Venti"
+id = "drunkventi"
+description = "Screen config for Drunk Venti"
+user = "evann"
+commands = ["watch neofetch"]

@@ -1,7 +1,0 @@
-name: "Test"
-id: "test"
-description: "This is a test"
-user: "evann"
-commands:
-  - "echo $USER >> test"
-  - "watch echo"
